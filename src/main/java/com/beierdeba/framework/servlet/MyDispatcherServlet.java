@@ -130,29 +130,34 @@ public class MyDispatcherServlet extends HttpServlet {
         Object[] args = new Object[parameterTypes.length];
 
         int argsCount = 0;
+        int index = 0;
         for (Class<?> parameterType : parameterTypes) {
 
-            System.out.println("[hand] parameterType.getSimpleName:" + parameterType.getSimpleName());
+            String simpleName = parameterType.getSimpleName();
+            System.out.println("[hand] parameterType.getSimpleName:" + simpleName);
 
             if (ServletRequest.class.isAssignableFrom(parameterType)) {
                 args[argsCount++] = req;
-                continue;
-            }
-            if (ServletResponse.class.isAssignableFrom(parameterType)) {
+            } else if (ServletResponse.class.isAssignableFrom(parameterType)) {
                 args[argsCount++] = resp;
-                continue;
-            }
-
-            Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-            for (Annotation[] annotations : parameterAnnotations) {
-                for (Annotation annotation : annotations) {
-                    System.out.println("[hand] parameterType.getSimpleName2:" + annotation.getClass().getSimpleName());
-                    if (MyRequestParam.class.isAssignableFrom(annotation.getClass())) {
-                        MyRequestParam requestParam = (MyRequestParam)annotation;
-                        args[argsCount++] = req.getParameter(requestParam.value());
+            } else {
+                Annotation[] annotation = method.getParameterAnnotations()[index];
+                if (annotation.length > 0) {
+                    for (Annotation annotation1 : annotation) {
+                        if (MyRequestParam.class.isAssignableFrom(annotation1.getClass())) {
+                            MyRequestParam requestParam = (MyRequestParam)annotation1;
+                            System.out.println("[hand] requestParam.value:" + requestParam.value());
+                            if ("String".equals(simpleName)) {
+                                args[argsCount++] = req.getParameter(requestParam.value());
+                            } else if ("Integer".equals(simpleName)) {
+                                args[argsCount++] = Integer.valueOf(req.getParameter(requestParam.value()));
+                            }
+                        }
                     }
                 }
             }
+            index++;
+
         }
         return args;
     }
